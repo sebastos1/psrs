@@ -1,7 +1,7 @@
 use crate::board::{Board, Tile};
 use std::collections::HashMap;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum PieceKind {
     Pawn,
     Knight,
@@ -17,7 +17,7 @@ pub enum Color {
     Black,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Piece {
     pub kind: PieceKind,
     pub color: Color,
@@ -55,13 +55,11 @@ impl Piece {
                     }
                 }
                 if let Some(next) = add(pos.1, dir) {
-                    if let Tile::Empty = board.tiles[pos.0][next] {
+                    if board.tiles[pos.0][next] == Tile::Empty {
                         moves.get_mut("empty").unwrap().push((pos.0, next));
                         if let Some(next) = add(pos.1, 2*dir) {
-                            if start_row == pos.1 as i8 {
-                                if let Tile::Empty = board.tiles[pos.0][next] {
-                                    moves.get_mut("empty").unwrap().push((pos.0, next));
-                                }
+                            if board.tiles[pos.0][next] == Tile::Empty && start_row == pos.1 as i8 {
+                                moves.get_mut("empty").unwrap().push((pos.0, next));
                             }
                         }
                     }
