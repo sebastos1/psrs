@@ -134,50 +134,40 @@ impl Board {
             Tile::Single(..) => self.tiles[current.0][current.1] = Tile::Empty,
             Tile::Empty => return false,
         }
+        
         let next = moves[0];
-        match moves.len() {
-            1 => {
-                match self.tiles[next.0][next.1] {
-                    Tile::Empty => {
-                        if moving_piece.valid_moves(current, self)["empty"].contains(&next) {
-                            self.tiles[next.0][next.1] = Tile::Single(moving_piece);
-                            return true
-                        } else {
-                            return false
-                        }
-                    }
-                    Tile::Single(opponent) => {
-                        
-                        if moving_piece.valid_moves(current, self)["enemy"].contains(&next) {
-                            match playing {
-                                Color::White => self.tiles[next.0][next.1] = Tile::Union { white: moving_piece, black: opponent },
-                                Color::Black => self.tiles[next.0][next.1] = Tile::Union { white: opponent, black: moving_piece },
-                            }
-                            return true
-                        } else {
-                            return false
-                        }
-                    }
-                    Tile::Union{ .. } => { return false }                    
-                }   
-            }
+        let valid_moves = moving_piece.valid_moves(current, self);
+        match (moves.len(), &self.tiles[next.0][next.1]) {
+            (1, Tile::Empty) if valid_moves["empty"].contains(&next) => {
+                self.tiles[next.0][next.1] = Tile::Single(moving_piece);
+                true
+            },
+            (1, Tile::Single(opponent)) if valid_moves["enemy"].contains(&next) => {
+                let (white, black) = match playing {
+                    Color::White => (moving_piece, *opponent),
+                    Color::Black => (*opponent, moving_piece),
+                };
+                self.tiles[next.0][next.1] = Tile::Union { white, black };
+                true
+            },
+            (1, Tile::Union{ .. }) => false,
             _ => {
-                // something is funky here
-                if let Tile::Union { white, black } = self.tiles[next.0][next.1] {
-                    let new_piece = if playing == Color::White { white } else { black };
+                if let Tile::Union { white, black } = &self.tiles[next.0][next.1] {
+                    let new_piece = if playing == Color::White { *white } else { *black };
                     let new_moves = moves[1..].to_vec();
-                    match playing {
-                        Color::White => self.tiles[next.0][next.1] = Tile::Union { white: moving_piece, black },
-                        Color::Black => self.tiles[next.0][next.1] = Tile::Union { white, black: moving_piece },
-                    }
-                    return self.validate_sequence(next, new_piece, new_moves, playing);
+                    let (white, black) = match playing {
+                        Color::White => (moving_piece, *black),
+                        Color::Black => (*white, moving_piece),
+                    };
+                    self.tiles[next.0][next.1] = Tile::Union { white, black };
+                    self.validate_sequence(next, new_piece, new_moves, playing)
                 } else {
-                    return false
+                    false
                 }
             }
         }
     }
-
+    
     fn update(&mut self, start: (usize, usize), dest: (usize, usize), piece: Tile) {
         match piece {
             Tile::Single(piece) => {
