@@ -5,7 +5,7 @@ use std::io;
 fn ask_input(board: &mut Board, mut playing: Color) -> Option<(usize, usize)> {
     loop {
         let mut input = String::new();
-        println!("ENTER MOVES:");
+        println!("{:?} - ENTER MOVES:", playing);
         if let Err(err) = io::stdin().read_line(&mut input) {
             println!("invalid input somehow: {}", err);
             continue;
@@ -15,7 +15,7 @@ fn ask_input(board: &mut Board, mut playing: Color) -> Option<(usize, usize)> {
             if validation.is_match(input) {
                 if input.len() == 2 {
                     let pos: (usize, usize) = get_coords(input.chars().nth(0).unwrap().to_ascii_lowercase(), input.chars().nth(1).unwrap());
-                    if let Some(piece) = board.get_piece(pos) {
+                    if let Some(piece) = board.get_piece(pos, playing) {
                         for (k, v) in piece.valid_moves(pos, board) {
                             if v.len() != 0 {
                                 println!("{}: {:?}", k, get_notation(v));
